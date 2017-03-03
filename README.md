@@ -104,7 +104,7 @@ Once you have everything setup, run the `setup_samba_honeypots.sh` to setup the 
 
 ## Test
 
-We have made some tests with **real** ransomware. We added then real PDF files to the bait-files dir. The setup script added the detection string, so before the infection this was our honeypot:
+We have made some tests with **real** ransomware. We added some real PDF files to the bait-files dir. The setup script added the detection string, so before the infection this was our honeypot:
 
 ```
 0_Memorandum-ShahZeZ6.odt
@@ -160,7 +160,7 @@ Mar  3 20:04:00 test smbd_audit: IP=192.168.122.68 | USER=test | MACHINE=ctk-pc 
 
 As we can see in the logs, the infected machine started encrypting files in our honeypot at 20:03:59 and fail2ban detected it and blocked the ip at 20:04:00, so the the ransomware only had 1 second to encrypt files in the server. If we have enough files in our honeypot, it won't get very far in just 1 second...
 
-If we check the status of our honeypot, we see that we only had 6 files encrypted, si the "infection" was limited to our honeypot and no real riles where afected.
+If we check the status of our honeypot, we see that we only had 6 files encrypted, so the "infection" was limited to our honeypot and no real files where afected.
 
 Not bad...
 
