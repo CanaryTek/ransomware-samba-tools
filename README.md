@@ -4,10 +4,10 @@ Tools to help stop ransomware infections in a samba fileserver
 
 ## The need
 
-Ransomware has became **THE** main security concern, and it will get (much) worse
+Ransomware has became the main security concern, and it will get (much) worse
 
-Even though Ransomware infects mainly windows machines, it can also encrypt files located in shared folders un fileservers.
-There are a **A LOT** of documentation and tools to stop infection at a fileserver level with Windows fileservers (with FSRM and other tools), but I haven't found many documentation to do the same with a samba fileserver
+Even though ransomware infects mainly windows machines, it can also encrypt files located in shared folders in fileservers.
+There is a lot of documentation and tools to stop infection at a fileserver level with Windows fileservers (with FSRM and other tools), but I haven't found many documentation to do the same with a samba fileserver
 
 ## What we can do
 
@@ -89,10 +89,96 @@ The sample fail2ban files are in the fail2ban directory
 
 In the tools directory there is a script to simplify the honeypot setup on all samba shared folders
 
-The `setup_samba_honeypots.sh` script gets the shared folder location from samba config and creates a honeypot dir on each one. It also copies all files found in the bait-dir to these honeypot directories
-You can add any file to the bait-files directory, and they will be copied to all honeypots. Just remember to add a random string to the file name and adding that string to the `__honeypot_files_re`
+The `setup_samba_honeypots.sh` script gets the shared folder location from samba config and creates a honeypot dir on each one. It also copies all files found in the bait-dir to these honeypot directories, changing its names to simplify detection
 
-The `setup_samba_honeypots.sh` script should be run in a crontab (i.e. hourly) to make sure you have honepots in any share you may create. It is also needed to add the bait files again after an infection, because most ransomware will rename the files and any further infection will not be detected
+You should adjust the following settings in the script:
+
+  * `bait_string`: Change it to something different. If everybody used the sample one it would be easy to avoid detection ;)
+  * Rememeber to add the same string used in this script to the ``__honeypot_files_re`` in the fail2ban samba-filter.conf file
+  * `bait_files_dir`: Directory with bait files to copy to the honeypots. More on this later
+  * `honey_folder`: Name of the honeypot directory. It should start with low ASCII characters (\_,\$, etc) si it is processed by the ransomware first
+
+After changing the previous settings, drop some real files in the `$bait_files_dir` directory. We need to have some real data here to keep the ransomware busy so fail2ban has time to detect and block before the ransomware starts encrypting real data
+
+Once you have everything setup, run the `setup_samba_honeypots.sh` to setup the honeypots. You should also run it regularly in a cron job (i.e. every 30 min) because if we get an infection, files will probably get renamed and it won't detect further infections.
+
+## Test
+
+We have made some tests with **real** ransomware. We added then real PDF files to the bait-files dir. The setup script added the detection string, so before the infection this was our honeypot:
+
+```
+0_Memorandum-ShahZeZ6.odt
+0_Memorandum-ShahZeZ6.pdf
+DO_NOT_TOUCH-ShahZeZ6.txt
+Factura-4742402860898-ShahZeZ6.pdf
+Factura-4742403791695-ShahZeZ6.pdf
+Factura-4742403984945-ShahZeZ6.pdf
+Factura-4742404036744-ShahZeZ6.pdf
+Factura-4742404110745-ShahZeZ6.pdf
+Factura-4742404111289-ShahZeZ6.pdf
+Factura-4742404111320-ShahZeZ6.pdf
+Factura-4742404199285-ShahZeZ6.pdf
+Factura-4742404240625-ShahZeZ6.pdf
+Factura-4742404356934-ShahZeZ6.pdf
+```
+
+Then we run a real ransomware, after a couple seconds fail2ban detected the infection and banned the IP. This is the log:
+
+```
+==> /var/log/messages <==
+Mar  3 20:03:59 test smbd_audit: IP=192.168.122.68 | USER=test | MACHINE=ctk-pc | VOLUME=test|rename|ok|____Secret_Data____/0_Memorandum-ShahZeZ6.odt|____Secret_Data____/0_Memorandum-ShahZeZ6.odt.yvoter
+Mar  3 20:03:59 test smbd_audit: IP=192.168.122.68 | USER=test | MACHINE=ctk-pc | VOLUME=test|pwrite|ok|____Secret_Data____/0_Memorandum-ShahZeZ6.odt.yvoter
+Mar  3 20:04:00 test smbd_audit: IP=192.168.122.68 | USER=test | MACHINE=ctk-pc | VOLUME=test|rename|ok|____Secret_Data____/0_Memorandum-ShahZeZ6.pdf|____Secret_Data____/0_Memorandum-ShahZeZ6.pdf.yxucvd
+Mar  3 20:04:00 test smbd_audit: IP=192.168.122.68 | USER=test | MACHINE=ctk-pc | VOLUME=test|pwrite|ok|____Secret_Data____/0_Memorandum-ShahZeZ6.pdf.yxucvd
+Mar  3 20:04:00 test smbd_audit: IP=192.168.122.68 | USER=test | MACHINE=ctk-pc | VOLUME=test|rename|ok|____Secret_Data____/Factura-4742402860898-ShahZeZ6.pdf|____Secret_Data____/Factura-4742402860898-ShahZeZ6.pdf.rsdwas
+Mar  3 20:04:00 test smbd_audit: IP=192.168.122.68 | USER=test | MACHINE=ctk-pc | VOLUME=test|pwrite|ok|____Secret_Data____/Factura-4742402860898-ShahZeZ6.pdf.rsdwas
+Mar  3 20:04:00 test smbd_audit: IP=192.168.122.68 | USER=test | MACHINE=ctk-pc | VOLUME=test|rename|ok|____Secret_Data____/Factura-4742403791695-ShahZeZ6.pdf|____Secret_Data____/Factura-4742403791695-ShahZeZ6.pdf.ugyqfw
+Mar  3 20:04:00 test smbd_audit: IP=192.168.122.68 | USER=test | MACHINE=ctk-pc | VOLUME=test|pwrite|ok|____Secret_Data____/Factura-4742403791695-ShahZeZ6.pdf.ugyqfw
+Mar  3 20:04:00 test smbd_audit: IP=192.168.122.68 | USER=test | MACHINE=ctk-pc | VOLUME=test|rename|ok|____Secret_Data____/Factura-4742403984945-ShahZeZ6.pdf|____Secret_Data____/Factura-4742403984945-ShahZeZ6.pdf.urefkc
+Mar  3 20:04:00 test smbd_audit: IP=192.168.122.68 | USER=test | MACHINE=ctk-pc | VOLUME=test|pwrite|ok|____Secret_Data____/Factura-4742403984945-ShahZeZ6.pdf.urefkc
+Mar  3 20:04:00 test smbd_audit: IP=192.168.122.68 | USER=test | MACHINE=ctk-pc | VOLUME=test|rename|ok|____Secret_Data____/Factura-4742404036744-ShahZeZ6.pdf|____Secret_Data____/Factura-4742404036744-ShahZeZ6.pdf.ahdciw
+
+==> /var/log/fail2ban.log <==
+2017-03-03 20:04:00,498 fail2ban.filter         [7413]: INFO    [samba] Found 192.168.122.68
+2017-03-03 20:04:00,504 fail2ban.filter         [7413]: INFO    [samba] Found 192.168.122.68
+2017-03-03 20:04:00,506 fail2ban.filter         [7413]: INFO    [samba] Found 192.168.122.68
+2017-03-03 20:04:00,507 fail2ban.filter         [7413]: INFO    [samba] Found 192.168.122.68
+2017-03-03 20:04:00,508 fail2ban.filter         [7413]: INFO    [samba] Found 192.168.122.68
+2017-03-03 20:04:00,509 fail2ban.filter         [7413]: INFO    [samba] Found 192.168.122.68
+2017-03-03 20:04:00,511 fail2ban.filter         [7413]: INFO    [samba] Found 192.168.122.68
+2017-03-03 20:04:00,512 fail2ban.filter         [7413]: INFO    [samba] Found 192.168.122.68
+2017-03-03 20:04:00,514 fail2ban.filter         [7413]: INFO    [samba] Found 192.168.122.68
+2017-03-03 20:04:00,515 fail2ban.filter         [7413]: INFO    [samba] Found 192.168.122.68
+2017-03-03 20:04:00,516 fail2ban.filter         [7413]: INFO    [samba] Found 192.168.122.68
+
+==> /var/log/messages <==
+Mar  3 20:04:00 test smbd_audit: IP=192.168.122.68 | USER=test | MACHINE=ctk-pc | VOLUME=test|pwrite|ok|____Secret_Data____/Factura-4742404036744-ShahZeZ6.pdf.ahdciw
+
+==> /var/log/fail2ban.log <==
+2017-03-03 20:04:00,740 fail2ban.actions        [7413]: NOTICE  [samba] Ban 192.168.122.68
+```
+
+As we can see in the logs, the infected machine started encrypting files in our honeypot at 20:03:59 and fail2ban detected it and blocked the ip at 20:04:00, so the the ransomware only had 1 second to encrypt files in the server. If we have enough files in our honeypot, it won't get very far in just 1 second...
+
+If we check the status of our honeypot, we see that we only had 6 files encrypted, si the "infection" was limited to our honeypot and no real riles where afected.
+
+Not bad...
+
+```
+0_Memorandum-ShahZeZ6.odt.yvoter
+0_Memorandum-ShahZeZ6.pdf.yxucvd
+DO_NOT_TOUCH-ShahZeZ6.txt
+Factura-4742402860898-ShahZeZ6.pdf.rsdwas
+Factura-4742403791695-ShahZeZ6.pdf.ugyqfw
+Factura-4742403984945-ShahZeZ6.pdf.urefkc
+Factura-4742404036744-ShahZeZ6.pdf.ahdciw
+Factura-4742404110745-ShahZeZ6.pdf
+Factura-4742404111289-ShahZeZ6.pdf
+Factura-4742404111320-ShahZeZ6.pdf
+Factura-4742404199285-ShahZeZ6.pdf
+Factura-4742404240625-ShahZeZ6.pdf
+Factura-4742404356934-ShahZeZ6.pdf
+```
 
 ## TODO
 
