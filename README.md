@@ -82,8 +82,8 @@ The sample fail2ban files are in the fail2ban directory
   * Copy and adjust the samba-jail.conf to the fail2ban jails directory. You may need to change the bantime and notifications email
   * Copy and adjust the samba-filter.conf to the fail2ban filter directory. Yoy may need to adjust the following parameters
     * `__honeypot_files_re`: Regex matching the bait files names. MAKE SURE YOU SET THIS CORRECLY
-    * `__known_ransom_extensions_re`= Known ransomware extensions. You may add eny new extensions, or remove one to avoid false positives
-    * `__known_ransom_files_re`= Known ransomware files. You may add eny new extensions, or remove one to avoid false positives
+    * `__known_ransom_extensions_re`: Known ransomware extensions. You may add eny new extensions, or remove one to avoid false positives
+    * `__known_ransom_files_re`: Known ransomware files. You may add eny new extensions, or remove one to avoid false positives
 
 #### Setup honeypots
 
