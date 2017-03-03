@@ -52,7 +52,7 @@ And we would monitor the samba accounting logs for the strings: ooKoich3 and Be1
 
 ## Installation
 
-### Setup samba for full audit
+# Setup samba for full audit
 
 In the samba dir there is a sample smb.conf file for reference
 
@@ -70,7 +70,7 @@ In the samba dir there is a sample smb.conf file for reference
 	# Option to enable audit for ransomware detection
 	vfs objects = full_audit
 
-### Install and setup fail2ban
+# Install and setup fail2ban
 
 The sample fail2ban files are in the fail2ban directory
 
@@ -81,7 +81,7 @@ The sample fail2ban files are in the fail2ban directory
     * `__known_ransom_extensions_re`= Known ransomware extensions. You may add eny new extensions, or remove one to avoid false positives
     * `__known_ransom_files_re`= Known ransomware files. You may add eny new extensions, or remove one to avoid false positives
 
-### Setyp honeypots
+# Setup honeypots
 
 In the tools directory there is a script to simplify the honeypot setup on all samba shared folders
 
