@@ -1,6 +1,6 @@
 # Ransomware samba tools
 
-Tools to help ransomware infection in a samba fileserver
+Tools to help stop ransomware infections in a samba fileserver
 
 ## The need
 
