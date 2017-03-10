@@ -91,16 +91,36 @@ In the tools directory there is a script to simplify the honeypot setup on all s
 
 The `setup_samba_honeypots.sh` script gets the shared folder location from samba config and creates a honeypot dir on each one. It also copies all files found in the bait-dir to these honeypot directories, changing its names to simplify detection
 
+  * Copy the `setup_samba_honeypots.sh` script to /usr/local/bin and allow execution to everyone
+  * Copy the `bait-files` directory to /usr/local/share
+
 You should adjust the following settings in the script:
 
   * `bait_string`: Change it to something different. If everybody used the sample one it would be easy to avoid detection ;)
   * Rememeber to add the same string used in this script to the ``__honeypot_files_re`` in the fail2ban samba-filter.conf file
-  * `bait_files_dir`: Directory with bait files to copy to the honeypots. More on this later
+  * `bait_files_dir`: Directory with bait files to copy to the honeypots (if you don't want to use the default localtion). More on this later
   * `honey_folder`: Name of the honeypot directory. It should start with low ASCII characters (\_,\$, etc) si it is processed by the ransomware first
 
 After changing the previous settings, drop some real files in the `$bait_files_dir` directory. We need to have some real data here to keep the ransomware busy so fail2ban has time to detect and block before the ransomware starts encrypting real data
 
 Once you have everything setup, run the `setup_samba_honeypots.sh` to setup the honeypots. You should also run it regularly in a cron job (i.e. every 30 min) because if we get an infection, files will probably get renamed and it won't detect further infections.
+
+### User home folders
+
+There is a problem with the [homes] setting in samba: it doesn't get listed with testparm, so if you share user home directories, the previous script does not create the honeypot
+
+What we do to manage the user home directories y creating the honeypot on demand when the user connects. We use the `preexec` option in smb.conf
+
+To enable user home folder protection, add the following options to your [homes] section
+
+```
+[homes]
+	...
+        # Enable full audit
+        vfs objects = full_audit
+        # Create honeypot on user connection
+        preexec = /usr/local/bin/setup_samba_honeypots.sh /home/%u
+```
 
 ## Test
 
