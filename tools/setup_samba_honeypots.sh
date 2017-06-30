@@ -20,7 +20,7 @@ fi
 
 
 for share in $shares; do
-	echo "Seting honeypot in $share"
+	echo "Setting honeypot in $share"
 	mkdir -p "/$share/$honey_folder"
 	# Copy files
 	for fullfile in $bait_files_dir/*; do
