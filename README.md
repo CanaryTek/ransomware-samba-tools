@@ -109,7 +109,7 @@ Once you have everything setup, run the `setup_samba_honeypots.sh` to setup the 
 
 There is a problem with the [homes] setting in samba: it doesn't get listed with testparm, so if you share user home directories, the previous script does not create the honeypot
 
-What we do to manage the user home directories y creating the honeypot on demand when the user connects. We use the `preexec` option in smb.conf
+We manage the user home directories by creating the honeypot on demand when the user connects. We use the `preexec` option in smb.conf
 
 To enable user home folder protection, add the following options to your [homes] section
 
